@@ -20,3 +20,6 @@ REST APIs
 
 ## Run Tests
 ./mvnw test
+
+
+“Completed the JPMC Midas Core backend simulation. Implemented Kafka consumers, transaction persistence, incentive integration, and REST balance API.”
