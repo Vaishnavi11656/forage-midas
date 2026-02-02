@@ -1,5 +1,6 @@
 package com.jpmc.midascore;
 
+import com.jpmc.midascore.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,8 +11,12 @@ import org.springframework.test.annotation.DirtiesContext;
 
 @SpringBootTest
 @DirtiesContext
-@EmbeddedKafka(partitions = 1, brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port=9092"})
+@EmbeddedKafka(partitions = 1, brokerProperties = {
+        "listeners=PLAINTEXT://localhost:9092",
+        "port=9092"
+})
 public class TaskFourTests {
+
     static final Logger logger = LoggerFactory.getLogger(TaskFourTests.class);
 
     @Autowired
@@ -23,24 +28,33 @@ public class TaskFourTests {
     @Autowired
     private FileLoader fileLoader;
 
+    @Autowired
+    private UserRepository userRepository; // 👈 Needed to read balances
+
     @Test
     void task_four_verifier() throws InterruptedException {
+
+        // Step 1: Create users
         userPopulator.populate();
+
+        // Step 2: Load transactions from file
         String[] transactionLines = fileLoader.loadStrings("/test_data/alskdjfh.fhdjsk");
+
+        // Step 3: Send each transaction to Kafka
         for (String transactionLine : transactionLines) {
             kafkaProducer.send(transactionLine);
         }
-        Thread.sleep(2000);
 
+        // Step 4: Wait for Kafka listener to process everything
+        Thread.sleep(3000);
 
-        logger.info("----------------------------------------------------------");
-        logger.info("----------------------------------------------------------");
-        logger.info("----------------------------------------------------------");
-        logger.info("use your debugger to find out what wilbur's balance is after all transactions are processed");
-        logger.info("kill this test once you find the answer");
-        while (true) {
-            Thread.sleep(20000);
-            logger.info("...");
-        }
+        // Step 5: Print final balances (THIS is what you need)
+        System.out.println("\n===== FINAL USER BALANCES =====");
+        userRepository.findAll().forEach(user ->
+                System.out.println(user.getName() + " -> " + user.getBalance())
+        );
+
+        // Step 6: Small delay so logs don't disappear instantly
+        Thread.sleep(5000);
     }
 }
